@@ -4,6 +4,7 @@ import cors from 'cors';
 import passport from 'passport';
 import connectDB from './config/dbConfig';
 import authRoutes from './routes/authRoutes';
+import dropboxRoutes from './routes/dropboxRoutes'
 
 const app = express();
 
@@ -17,6 +18,7 @@ connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/dropbox', dropboxRoutes)
 
 app.get('/', (req, res) => {
   res.send('Backend API is running');

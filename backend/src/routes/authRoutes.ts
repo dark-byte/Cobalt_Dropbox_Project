@@ -1,25 +1,18 @@
 // src/routes/authRoutes.ts
-import { Router } from 'express';
+import express from 'express';
 import passport from 'passport';
-import { generateJWT } from '../services/authService';
+import { registerUser, loginUser, registerValidation, loginValidation, googleAuthCallback } from '../controllers/authController'; // Ensure this imports googleAuthCallback
 
-const router = Router();
+const router = express.Router();
 
-// Initiate Google Login
-router.get(
-  '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+// Standard email/password registration and login routes
+router.post('/register', registerValidation, registerUser);
+router.post('/login', loginValidation, loginUser);
 
-// Google Callback
-router.get(
-  '/google/callback',
-  passport.authenticate('google', { session: false }),
-  (req: any, res) => {
-    // Generate JWT and send to client
-    const token = generateJWT(req.user);
-    res.json({ token });
-  }
-);
+// Google OAuth login route
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Google OAuth callback route
+router.get('/google/callback', passport.authenticate('google', { session: false }), googleAuthCallback);
 
 export default router;
