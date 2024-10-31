@@ -1,0 +1,18 @@
+/* src/components/DropboxManager.css */
+.dropbox-manager {
+  margin-bottom: 1rem;
+}
+
+.connect-button {
+  background-color: #0061ff;
+  border: none;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.connect-button:hover {
+  background-color: #0052cc;
+}
