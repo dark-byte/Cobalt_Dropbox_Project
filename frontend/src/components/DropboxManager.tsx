@@ -14,6 +14,7 @@ const DropboxManager: React.FC = () => {
   const { token: jwtToken, dropboxToken } = useContext(AuthContext);
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [newFolderName, setNewFolderName] = useState('');
   const isInitialMount = useRef(true);
   const hasShownError = useRef(false);
   const fetchTimeoutRef = useRef<NodeJS.Timeout>();
@@ -58,12 +59,13 @@ const DropboxManager: React.FC = () => {
     };
   }, [fetchFiles]);
 
-  const handleCreateFolder = async (folderPath: string) => {
-    if (!jwtToken || !dropboxToken) return;
+  const handleCreateFolder = async () => {
+    if (!jwtToken || !dropboxToken || !newFolderName.trim()) return;
 
     try {
-      await createDropboxFolder(jwtToken, dropboxToken, folderPath);
+      await createDropboxFolder(jwtToken, dropboxToken, `/${newFolderName.trim()}`);
       toast.success('Folder created successfully!');
+      setNewFolderName('');
       fetchFiles();
     } catch (error) {
       console.error('Error creating Dropbox folder:', error);
@@ -73,6 +75,9 @@ const DropboxManager: React.FC = () => {
 
   const handleDeleteItem = async (path: string) => {
     if (!jwtToken || !dropboxToken) return;
+
+    const confirmDelete = window.confirm('Are you sure you want to delete this item? This action cannot be undone.');
+    if (!confirmDelete) return;
 
     try {
       await deleteDropboxItem(jwtToken, dropboxToken, path);
@@ -90,11 +95,17 @@ const DropboxManager: React.FC = () => {
 
   return (
     <div className="dropbox-manager">
-      <div className="header">
         <h2>Your Dropbox Folders</h2>
+      <div className="header">
+        <input 
+          type="text" 
+          value={newFolderName} 
+          onChange={(e) => setNewFolderName(e.target.value)} 
+          placeholder="New folder name" 
+        />
         <button 
           className="create-folder-button" 
-          onClick={() => handleCreateFolder('/new-folder')}
+          onClick={handleCreateFolder}
           disabled={isLoading}
         >
           Create Folder

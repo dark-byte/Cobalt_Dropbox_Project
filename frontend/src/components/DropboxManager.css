@@ -6,7 +6,8 @@
   background: var(--background);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  max-width: 1200px;
+  width: 80%;
+  min-width: 400px;
   margin: 0 auto;
   margin-top: var(--spacing-lg);
 }
@@ -22,6 +23,7 @@
   color: var(--text-primary);
   font-size: var(--font-size-xl);
   margin: 0;
+  margin-bottom: var(--spacing-md);
 }
 
 .dropbox-manager button {
@@ -45,6 +47,7 @@
   gap: var(--spacing-md);
   padding: 0;
   margin: var(--spacing-lg) 0;
+  list-style: none; 
 }
 
 .dropbox-manager li {
@@ -90,7 +93,22 @@
   min-width: 150px;
   max-width: 150px;
   margin-left: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+}
+
+.dropbox-manager .create-folder-container {
+  display: flex;
+  align-items: center;
+}
+
+.dropbox-manager .create-folder-input {
+  margin-right: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+}
+
+.dropbox-manager input{
+  margin: 0;
 }
 
 .dropbox-manager p {
