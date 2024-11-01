@@ -25,10 +25,18 @@ export const loginWithDropbox = async (authToken: string) => {
 };
 
 export const listDropboxFolders = async (token: string) => {
-  const response = await axios.get(`${API_URL}/listFolders`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
+  try {
+    const response = await axios.get(`${API_URL}/listFolders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error listing folders:', error);
+    throw error;
+  }
 };
 
 export const createDropboxFolder = async (token: string, folderPath: string) => {

@@ -1,9 +1,9 @@
-import React, { useEffect, useContext, useState } from 'react';
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DropboxManager from '../components/DropboxManager';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
@@ -12,6 +12,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const API_URL = process.env.REACT_APP_DROPBOX_API_URL;
   const [isLoading, setIsLoading] = useState(false);
+  const hasShownConnectionToast = useRef(false);
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -26,7 +28,11 @@ const Dashboard: React.FC = () => {
 
     if (urlDropboxToken) {
       setDropboxToken(urlDropboxToken);
-      toast.success('Dropbox linked successfully!');
+      localStorage.setItem('dropboxConnected', 'true');
+      if (!hasShownConnectionToast.current) {
+        toast.success('Dropbox linked successfully!');
+        hasShownConnectionToast.current = true;
+      }
     }
   }, [location, setToken, setDropboxToken, navigate]);
 
@@ -52,20 +58,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleTokenCheckError = (error: AxiosError) => {
-    if (error.response?.status === 404) {
-      console.log('No Dropbox token found');
-      setDropboxToken(null);
-    } else if (error.response?.status === 401) {
-      console.error('Dropbox token expired');
-      setDropboxToken(null);
-      toast.error('Dropbox connection expired. Please reconnect.');
-    } else {
-      console.error('Unexpected error:', error);
-      toast.error('Failed to verify Dropbox connection');
-    }
-  };
-
   const checkDropboxToken = async () => {
     if (token) {
       setIsLoading(true);
@@ -81,12 +73,27 @@ const Dashboard: React.FC = () => {
         if (response.data.dropboxToken) {
           console.log('Setting Dropbox token in context');
           setDropboxToken(response.data.dropboxToken);
-          toast.success('Dropbox connection verified');
+          if (!localStorage.getItem('dropboxConnected')) {
+            localStorage.setItem('dropboxConnected', 'true');
+            if (!hasShownConnectionToast.current) {
+              toast.success('Dropbox connection verified');
+              hasShownConnectionToast.current = true;
+            }
+          }
         }
       } catch (error) {
         console.error('Token check failed:', error);
         if (axios.isAxiosError(error)) {
-          handleTokenCheckError(error);
+          if (error.response?.status === 404) {
+            console.log('Dropbox token not found');
+          } else if (error.response?.status === 401) {
+            console.error('Dropbox token expired');
+            setDropboxToken(null);
+            toast.error('Dropbox connection expired. Please reconnect.');
+          } else {
+            console.error('Error checking Dropbox token:', error);
+            toast.error('Failed to verify Dropbox connection');
+          }
         }
       } finally {
         setIsLoading(false);
@@ -95,7 +102,10 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    checkDropboxToken();
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      checkDropboxToken();
+    }
   }, [token]);
 
   if (isLoading) {
@@ -115,7 +125,7 @@ const Dashboard: React.FC = () => {
             onClick={handleDropboxLogin}
             disabled={isLoading}
           >
-            {isLoading ? 'Connecting...' : 'Login with Dropbox'}
+            Login with Dropbox
           </button>
         </div>
       ) : (
