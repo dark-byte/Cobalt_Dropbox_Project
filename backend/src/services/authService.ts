@@ -19,8 +19,7 @@ passport.use(
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails?.[0].value,
-            profilePicture: profile.photos?.[0].value,
-            dropboxToken: accessToken, // Store the access token
+            profilePicture: profile.photos?.[0].value
           });
           console.log('User created:', user);
         } else {

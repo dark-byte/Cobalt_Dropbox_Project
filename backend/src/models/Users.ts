@@ -1,4 +1,4 @@
-import mongoose, { Schema, model, Document } from 'mongoose';
+import mongoose, { Schema, Model, Document } from 'mongoose';
 
 export interface IUser extends Document {
   _id: mongoose.Types.ObjectId,
@@ -8,20 +8,19 @@ export interface IUser extends Document {
   googleId?: string;
   profilePicture?: string;
   dropboxToken?: string;
+  dropboxRefreshToken?: string;
+  dropboxTokenExpiry?: Date;
 }
 
 const userSchema = new Schema<IUser>({
   email: {
     type: String,
     required: true,
-    unique: true, // Ensures email uniqueness
-    lowercase: true, // Normalize email to lowercase
+    unique: true,
+    lowercase: true,
     trim: true,
   },
-  password: {
-    type: String,
-    // Password is optional because OAuth users may not have a password
-  },
+  password: String,
   name: {
     type: String,
     required: true,
@@ -29,23 +28,20 @@ const userSchema = new Schema<IUser>({
   },
   googleId: {
     type: String,
-    unique: true, // Optional: ensures unique Google IDs
-    sparse: true, // Allows multiple documents without a googleId
+    unique: true,
+    sparse: true,
   },
-  profilePicture: {
-    type: String,
-  },
-  dropboxToken: {
-    type: String,
-  },
+  profilePicture: String,
+  dropboxToken: String,
+  dropboxRefreshToken: String,
+  dropboxTokenExpiry: Date,
 }, {
-  timestamps: true, // Optional: adds createdAt and updatedAt fields
+  timestamps: true,
 });
 
-// Create indexes
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ googleId: 1 }, { unique: true, sparse: true });
 
-const User = model<IUser>('User', userSchema);
+const User: Model<IUser> = mongoose.model<IUser>('User', userSchema);
 
 export default User;

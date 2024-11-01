@@ -1,73 +1,125 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import DropboxManager from '../components/DropboxManager';
-
-interface File {
-  id: string;
-  name: string;
-  path: string;
-}
+import axios, { AxiosError } from 'axios';
+import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
-  const [files, setFiles] = useState<File[]>([]);
-  const { token, setToken } = useContext(AuthContext);
+  const { token, dropboxToken, setToken, setDropboxToken } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_DROPBOX_API_URL;
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Extract token from URL if present
     const params = new URLSearchParams(location.search);
     const urlToken = params.get('token');
+    const urlDropboxToken = params.get('dropboxToken');
 
     if (urlToken) {
       setToken(urlToken);
-      localStorage.setItem('authToken', urlToken);
       toast.success('Login successful!');
-      // Clean the URL by removing the token query parameter
       navigate('/dashboard', { replace: true });
     }
 
-    // Fetch Dropbox files if token is available
-    if (token) {
-      const fetchDropboxFiles = async (authToken: string) => {
-        try {
-          // Replace with your actual API endpoint and fetch logic
-          const response = await fetch('http://localhost:8000/api/dropbox/files', {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch Dropbox files');
-          }
-
-          const data: File[] = await response.json();
-          setFiles(data);
-        } catch (error: any) {
-          console.error('Error fetching Dropbox files:', error);
-          toast.error('Failed to load Dropbox files. Please try again.');
-        }
-      };
-
-      fetchDropboxFiles(token);
+    if (urlDropboxToken) {
+      setDropboxToken(urlDropboxToken);
+      toast.success('Dropbox linked successfully!');
     }
-  }, [location, setToken, navigate, token]);
+  }, [location, setToken, setDropboxToken, navigate]);
+
+  const handleDropboxLogin = async () => {
+    if (token) {
+      setIsLoading(true);
+      try {
+        const response = await axios.get(`${API_URL}/auth`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log('Dropbox auth response:', response.data);
+        window.location.href = response.data.redirectUrl;
+      } catch (error) {
+        console.error('Error initiating Dropbox login:', error);
+        toast.error('Failed to initiate Dropbox login');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      toast.error('You must be logged in to link your Dropbox account.');
+    }
+  };
+
+  const handleTokenCheckError = (error: AxiosError) => {
+    if (error.response?.status === 404) {
+      console.log('No Dropbox token found');
+      setDropboxToken(null);
+    } else if (error.response?.status === 401) {
+      console.error('Dropbox token expired');
+      setDropboxToken(null);
+      toast.error('Dropbox connection expired. Please reconnect.');
+    } else {
+      console.error('Unexpected error:', error);
+      toast.error('Failed to verify Dropbox connection');
+    }
+  };
+
+  const checkDropboxToken = async () => {
+    if (token) {
+      setIsLoading(true);
+      try {
+        console.log('Checking Dropbox token status...');
+        const response = await axios.get(`${API_URL}/checkDropboxToken`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log('Token check response:', response.data);
+        
+        if (response.data.dropboxToken) {
+          console.log('Setting Dropbox token in context');
+          setDropboxToken(response.data.dropboxToken);
+          toast.success('Dropbox connection verified');
+        }
+      } catch (error) {
+        console.error('Token check failed:', error);
+        if (axios.isAxiosError(error)) {
+          handleTokenCheckError(error);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    checkDropboxToken();
+  }, [token]);
+
+  if (isLoading) {
+    return (
+      <div className="dashboard-container">
+        <div className="loading">Connecting to Dropbox...</div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2>Your Dropbox Files</h2>
-      <DropboxManager />
-      {files.length > 0 ? (
-        <ul>
-          {files.map(file => (
-            <li key={file.id}>{file.name}</li>
-          ))}
-        </ul>
+    <div className="dashboard-container">
+      {!dropboxToken ? (
+        <div className="dropbox-login-container">
+          <button 
+            className="dropbox-login-button" 
+            onClick={handleDropboxLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Connecting...' : 'Login with Dropbox'}
+          </button>
+        </div>
       ) : (
-        <p>No files available.</p>
+        <DropboxManager />
       )}
     </div>
   );

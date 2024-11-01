@@ -4,7 +4,7 @@ import { login } from '../../services/authService';
 import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import './Login.css'; // Optional: Create a CSS file for styling
+import './Auth.css';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');

@@ -5,11 +5,14 @@ import './Home.css'
 
 const Home: React.FC = () => {
   return (
-    <div>
-      <h1>Welcome to Dropbox Manager</h1>
-      <p>
-        <Link to="/login">Login</Link> or <Link to="/register">Register</Link> to manage your Dropbox files.
-      </p>
+    <div className="home-container">
+      <div className="home-content">
+        <h1>Welcome to Dropbox Manager</h1>
+        <div className="button-container">
+          <Link to="/login" className="home-button">Login</Link>
+          <Link to="/register" className="home-button">Register</Link>
+        </div>
+      </div>
     </div>
   );
 };

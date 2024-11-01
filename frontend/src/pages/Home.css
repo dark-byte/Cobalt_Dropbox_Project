@@ -1,22 +1,45 @@
+@import '../styles/variable.css';
+
 .home-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - var(--navbar-height, 64px)); 
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.home-content {
   text-align: center;
-  margin-top: 50px;
+  max-width: 600px;
+  padding: var(--spacing-xl);
 }
 
-.home-container h1 {
-  color: #333;
+.home-content h1 {
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  margin: 0 0 var(--spacing-xl) 0;
 }
 
-.home-container p {
-  font-size: 1.2rem;
+.button-container {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
 }
 
-.home-container a {
-  margin: 0 10px;
-  color: #4CAF50;
+.home-button {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
   text-decoration: none;
+  transition: var(--transition);
 }
 
-.home-container a:hover {
-  text-decoration: underline;
+.home-button:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
 }

@@ -1,18 +1,106 @@
-/* src/components/DropboxManager.css */
+@import '../styles/variable.css';
+
 .dropbox-manager {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: var(--background);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-top: var(--spacing-lg);
 }
 
-.connect-button {
-  background-color: #0061ff;
-  border: none;
+.dropbox-manager .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.dropbox-manager h2 {
+  color: var(--text-primary);
+  font-size: var(--font-size-xl);
+  margin: 0;
+}
+
+.dropbox-manager button {
+  background-color: var(--primary-color);
   color: white;
-  padding: 0.75rem 1.5rem;
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  border-radius: 4px;
-  font-size: 1rem;
+  transition: var(--transition);
+  font-size: var(--font-size-md);
 }
 
-.connect-button:hover {
-  background-color: #0052cc;
+.dropbox-manager button:hover {
+  background-color: var(--primary-dark);
+}
+
+.dropbox-manager ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  padding: 0;
+  margin: var(--spacing-lg) 0;
+}
+
+.dropbox-manager li {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--secondary-color);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  height: 100px;
+  transition: var(--transition);
+}
+
+.dropbox-manager li:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.dropbox-manager .file-name {
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  font-weight: 500;
+  margin-bottom: var(--spacing-md);
+  word-break: break-word;
+}
+
+.dropbox-manager .delete-button {
+  background: none;
+  background-color: none;
+  border: solid var(--error) 1px;
+  color: var(--error);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  margin-top: auto;
+  width: 100%;
+}
+
+.dropbox-manager .delete-button:hover {
+  background-color: #ff6b6b;
+  color: #fff;
+}
+
+.dropbox-manager .create-folder-button {
+  min-width: 150px;
+  max-width: 150px;
+  margin-left: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.dropbox-manager p {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: var(--spacing-lg);
+}
+
+@media (max-width: 768px) {
+  .dropbox-manager ul {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
 }

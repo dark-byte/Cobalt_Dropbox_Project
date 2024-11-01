@@ -3,6 +3,8 @@ import express from 'express';
 import * as dropboxController from '../controllers/dropboxController';
 import authMiddleware from '../middleware/authMiddleware';
 import { body } from 'express-validator';
+import csurf from 'csurf';
+const csrfProtection = csurf({ cookie: true });
 
 const router = express.Router();
 
@@ -11,9 +13,10 @@ const folderPathValidation = body('folderPath').notEmpty().withMessage('Folder p
 const pathValidation = body('path').notEmpty().withMessage('Path is required');
 
 router.get('/auth', authMiddleware, dropboxController.redirectToDropboxAuth);
-router.get('/auth/callback', authMiddleware, dropboxController.handleDropboxAuthCallback);
+router.get('/auth/callback', dropboxController.handleDropboxAuthCallback);
+router.get('/checkDropboxToken', authMiddleware, dropboxController.checkDropboxToken);
 router.get('/listFolders', authMiddleware, dropboxController.listFolders);
-router.post('/createFolder', authMiddleware, folderPathValidation, dropboxController.createFolder);
-router.post('/delete', authMiddleware, pathValidation, dropboxController.deleteFileOrFolder);
+router.post('/createFolder', csrfProtection, authMiddleware, folderPathValidation, dropboxController.createFolder);
+router.post('/delete', csrfProtection, authMiddleware, pathValidation, dropboxController.deleteFileOrFolder);
 
 export default router;
