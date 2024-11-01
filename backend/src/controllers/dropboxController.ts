@@ -96,35 +96,19 @@ export const listFolders = asyncHandler(async (req: Request, res: Response) => {
   
   const user = await User.findById((req.user as IUser)._id);
   if (!user) {
+    console.log('User not found');
     return res.status(404).json({ error: 'User not found' });
   }
 
-  if (!user.dropboxToken) {
-    return res.status(403).json({ error: 'Dropbox not connected' });
+  const dropboxToken = req.headers['dropbox-token'] as string;
+  if (!dropboxToken) {
+    console.log('Dropbox token not provided');
+    return res.status(403).json({ error: 'Dropbox token not provided' });
   }
 
   try {
-    // Verify token before proceeding
-    await dropboxService.verifyDropboxToken(user.dropboxToken);
-
-    // Check if token needs refresh
-    if (user.dropboxTokenExpiry && new Date() > user.dropboxTokenExpiry) {
-      if (!user.dropboxRefreshToken) {
-        return res.status(403).json({ error: 'Dropbox token expired and no refresh token available' });
-      }
-
-      console.log('Token expired, attempting refresh...');
-      const newTokens = await dropboxService.refreshDropboxToken(user.dropboxRefreshToken);
-      
-      user.dropboxToken = newTokens.access_token;
-      user.dropboxTokenExpiry = new Date(Date.now() + (newTokens.expires_in * 1000));
-      await user.save();
-      
-      console.log('Token refreshed successfully');
-    }
-
     console.log('Fetching folders from Dropbox...');
-    const folders = await dropboxService.listDropboxFolders(user);
+    const folders = await dropboxService.listDropboxFolders(dropboxToken);
     return res.json(folders);
   } catch (error) {
     console.error('Error listing folders:', error);
@@ -149,12 +133,18 @@ export const createFolder = asyncHandler(async (req: Request, res: Response) => 
   }
 
   const user = await User.findById((req.user as IUser)._id);
-  if (!user || !user.dropboxToken) {
+  if (!user) {
     return res.status(403).json({ error: 'Dropbox not connected' });
   }
 
+  const dropboxToken = req.headers['dropbox-token'] as string;
+  if (!dropboxToken) {
+    console.log('Dropbox token not provided');
+    return res.status(403).json({ error: 'Dropbox token not provided' });
+  }
+
   try {
-    const result = await dropboxService.createDropboxFolder(user, folderPath);
+    const result = await dropboxService.createDropboxFolder(dropboxToken, folderPath);
     res.json(result);
   } catch (error) {
     const typedError = error as Error;
@@ -176,12 +166,18 @@ export const deleteFileOrFolder = asyncHandler(async (req: Request, res: Respons
   }
 
   const user = await User.findById((req.user as IUser)._id);
-  if (!user || !user.dropboxToken) {
+  if (!user) {
     return res.status(403).json({ error: 'Dropbox not connected' });
   }
 
+  const dropboxToken = req.headers['dropbox-token'] as string;
+  if (!dropboxToken) {
+    console.log('Dropbox token not provided');
+    return res.status(403).json({ error: 'Dropbox token not provided' });
+  }
+
   try {
-    const result = await dropboxService.deleteDropboxItem(user, path);
+    const result = await dropboxService.deleteDropboxItem(dropboxToken, path);
     res.json(result);
   } catch (error) {
     const typedError = error as Error;

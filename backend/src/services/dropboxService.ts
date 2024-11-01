@@ -1,7 +1,5 @@
 import axios from 'axios';
 import querystring from 'querystring';
-import crypto from 'crypto';
-import { Document } from 'mongoose';
 import { IUser } from '../models/Users';
 
 const DROPBOX_API_URL = 'https://api.dropboxapi.com/2';
@@ -47,7 +45,7 @@ export const getDropboxAccessToken = async (code: string) => {
   }
 };
 
-// Add the refresh token function
+// Refresh Dropbox token
 export const refreshDropboxToken = async (refreshToken: string): Promise<DropboxTokens> => {
   try {
     const response = await axios.post(
@@ -69,7 +67,7 @@ export const refreshDropboxToken = async (refreshToken: string): Promise<Dropbox
   }
 };
 
-// Add the withTokenRefresh wrapper function
+// Wrapper function to handle token refresh
 export const withTokenRefresh = async <T>(
   user: IUser,
   apiCall: (token: string) => Promise<T>
@@ -110,60 +108,82 @@ export const withTokenRefresh = async <T>(
 };
 
 // List folders in the user's Dropbox account
-export const listDropboxFolders = async (user: IUser) => {
-  return withTokenRefresh(user, async (token) => {
+export const listDropboxFolders = async (dropboxToken: string) => {
+  try {
     const response = await axios.post(
       `${DROPBOX_API_URL}/files/list_folder`,
       { path: '' }, // Empty path to list root folders
-      { headers: { Authorization: `Bearer ${token}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${dropboxToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
     );
     return response.data;
-  });
+  } catch (error) {
+    console.error('Error listing folders:', error);
+    throw error;
+  }
 };
 
 // Create a new folder in the user's Dropbox account
-export const createDropboxFolder = async (user: IUser, folderPath: string) => {
-  return withTokenRefresh(user, async (token) => {
+export const createDropboxFolder = async (dropboxToken: string, folderPath: string) => {
+  try {
     const response = await axios.post(
       `${DROPBOX_API_URL}/files/create_folder_v2`,
       { path: folderPath },
-      { headers: { Authorization: `Bearer ${token}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${dropboxToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
     );
     return response.data;
-  });
+  } catch (error) {
+    console.error('Error creating folder:', error);
+    throw error;
+  }
 };
 
 // Delete a file or folder in the user's Dropbox account
-export const deleteDropboxItem = async (user: IUser, path: string) => {
-  return withTokenRefresh(user, async (token) => {
+export const deleteDropboxItem = async (dropboxToken: string, path: string) => {
+  try {
     const response = await axios.post(
       `${DROPBOX_API_URL}/files/delete_v2`,
       { path },
-      { headers: { Authorization: `Bearer ${token}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${dropboxToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
     );
     return response.data;
-  });
+  } catch (error) {
+    console.error('Error deleting item:', error);
+    throw error;
+  }
 };
 
+// Verify Dropbox token
 export async function verifyDropboxToken(token: string): Promise<boolean> {
   try {
-  const response = await fetch('https://api.dropboxapi.com/2/check/user', {
-    method: 'POST',
-    headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({})
-  });
+    const response = await axios.post(
+      'https://api.dropboxapi.com/2/check/user',
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
-  if (!response.ok) {
-    throw new Error('Token verification failed');
-  }
-
-  const data = await response.json();
-  return data.result === 'ok';
+    return response.status === 200;
   } catch (error) {
-  console.error('Error verifying Dropbox token:', error);
-  return false;
+    console.error('Error verifying Dropbox token:', error);
+    return false;
   }
-};
+}

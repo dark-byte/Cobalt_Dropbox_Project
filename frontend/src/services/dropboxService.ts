@@ -24,11 +24,12 @@ export const loginWithDropbox = async (authToken: string) => {
   }
 };
 
-export const listDropboxFolders = async (token: string) => {
+export const listDropboxFolders = async (jwtToken: string, dropboxToken: string) => {
   try {
     const response = await axios.get(`${API_URL}/listFolders`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${jwtToken}`,
+        'Dropbox-Token': dropboxToken,
         'Content-Type': 'application/json'
       }
     });
@@ -39,20 +40,32 @@ export const listDropboxFolders = async (token: string) => {
   }
 };
 
-export const createDropboxFolder = async (token: string, folderPath: string) => {
+export const createDropboxFolder = async (jwtToken: string, dropboxToken: string, folderPath: string) => {
   const response = await axios.post(
     `${API_URL}/createFolder`,
     { folderPath },
-    { headers: { Authorization: `Bearer ${token}` } }
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        'Dropbox-Token': dropboxToken,
+        'Content-Type': 'application/json'
+      }
+    }
   );
   return response.data;
 };
 
-export const deleteDropboxItem = async (token: string, path: string) => {
+export const deleteDropboxItem = async (jwtToken: string, dropboxToken: string, path: string) => {
   const response = await axios.post(
     `${API_URL}/delete`,
     { path },
-    { headers: { Authorization: `Bearer ${token}` } }
+    {
+      headers: {
+        Authorization: `Bearer ${jwtToken}`,
+        'Dropbox-Token': dropboxToken,
+        'Content-Type': 'application/json'
+      }
+    }
   );
   return response.data;
 };

@@ -11,7 +11,7 @@ interface File {
 }
 
 const DropboxManager: React.FC = () => {
-  const { token, dropboxToken } = useContext(AuthContext);
+  const { token: jwtToken, dropboxToken } = useContext(AuthContext);
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const isInitialMount = useRef(true);
@@ -19,13 +19,13 @@ const DropboxManager: React.FC = () => {
   const fetchTimeoutRef = useRef<NodeJS.Timeout>();
 
   const fetchFiles = useCallback(async () => {
-    if (!token || !dropboxToken) {
+    if (!jwtToken || !dropboxToken) {
       setIsLoading(false);
       return;
     }
 
     try {
-      const response = await listDropboxFolders(token);
+      const response = await listDropboxFolders(jwtToken, dropboxToken);
       const formattedFiles = response.entries.map((entry: any) => ({
         id: entry.id,
         name: entry.name,
@@ -42,22 +42,13 @@ const DropboxManager: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token, dropboxToken]);
+  }, [jwtToken, dropboxToken]);
 
-  // Handle initial mount and token changes
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      return;
-    }
-
-    if (fetchTimeoutRef.current) {
-      clearTimeout(fetchTimeoutRef.current);
-    }
-
-    fetchTimeoutRef.current = setTimeout(() => {
       fetchFiles();
-    }, 1000);
+    }
 
     return () => {
       if (fetchTimeoutRef.current) {
@@ -68,10 +59,10 @@ const DropboxManager: React.FC = () => {
   }, [fetchFiles]);
 
   const handleCreateFolder = async (folderPath: string) => {
-    if (!token || !dropboxToken) return;
+    if (!jwtToken || !dropboxToken) return;
 
     try {
-      await createDropboxFolder(token, folderPath);
+      await createDropboxFolder(jwtToken, dropboxToken, folderPath);
       toast.success('Folder created successfully!');
       fetchFiles();
     } catch (error) {
@@ -81,10 +72,10 @@ const DropboxManager: React.FC = () => {
   };
 
   const handleDeleteItem = async (path: string) => {
-    if (!token || !dropboxToken) return;
+    if (!jwtToken || !dropboxToken) return;
 
     try {
-      await deleteDropboxItem(token, path);
+      await deleteDropboxItem(jwtToken, dropboxToken, path);
       toast.success('Item deleted successfully!');
       fetchFiles();
     } catch (error) {
@@ -93,7 +84,7 @@ const DropboxManager: React.FC = () => {
     }
   };
 
-  if (!token || !dropboxToken) {
+  if (!jwtToken || !dropboxToken) {
     return null;
   }
 
