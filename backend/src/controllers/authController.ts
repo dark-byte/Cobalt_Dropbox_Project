@@ -6,11 +6,6 @@ import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/Users';
 import { generateJWT } from '../services/authService'; 
 
-// Function to generate JWT token
-const generateJwtToken = (userId: string) => {
-  return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: '1d' });
-};
-
 // Validation rules for registration
 export const registerValidation = [
   body('email').isEmail().withMessage('Please enter a valid email'),
@@ -40,14 +35,14 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
   const { email, password, name } = req.body;
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       res.status(400).json({ error: 'User already exists' });
       return;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ email, password: hashedPassword, name });
+    const newUser = new User({ email: email.toLowerCase(), password: hashedPassword, name });
     await newUser.save();
 
     res.status(201).json({ message: 'User registered successfully' });
@@ -62,7 +57,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email }) as IUser;
+    const user = await User.findOne({ email: email.toLowerCase() }) as IUser;
     if (!user || !user.password) {
       res.status(400).json({ error: 'Invalid credentials' });
       return;
@@ -74,7 +69,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = generateJwtToken(user._id.toString());
+    const token = generateJWT(user);
     res.json({ token, user });
   } catch (error) {
     res.status(500).json({ error: 'Login failed' });
@@ -83,10 +78,20 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
 
 // Google OAuth callback route
 export const googleAuthCallback = async (req: Request, res: Response): Promise<void> => {
-  const user = req.user as IUser; // user should already be populated by passport
-  const token = generateJWT(user); // Generate JWT
+  try {
+    const user = req.user as IUser; // User is populated by Passport.js
 
-  await user.save();
+    if (!user || !user.email) {
+      res.status(400).json({ error: 'User information is incomplete' });
+      return;
+    }
 
-  res.json({ token, user });
+    const token = generateJWT(user); // Generate JWT
+
+    // Redirect to frontend home page with token as query parameter
+    res.redirect(`http://localhost:3000/dashboard?token=${token}`);
+  } catch (error: any) {
+    console.error('Google OAuth callback error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
+  }
 };

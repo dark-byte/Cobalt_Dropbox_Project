@@ -4,6 +4,7 @@ import { login } from '../../services/authService';
 import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import './Login.css'; // Optional: Create a CSS file for styling
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +18,7 @@ const Login: React.FC = () => {
       const response = await login(email, password);
       const { token } = response.data;
       setToken(token);
-      localStorage.setItem('token', token);
+      localStorage.setItem('authToken', token); // Ensure the token is stored with the correct key
       toast.success('Login successful!');
       navigate('/dashboard');
     } catch (error: any) { // Type 'any' to access error.response
@@ -30,11 +31,13 @@ const Login: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
+    // Initiates Google OAuth flow
+    const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    window.location.href = `${apiUrl}/auth/google`;
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="login-form">
       <h2>Login</h2>
       <input 
         type="email" 
@@ -51,7 +54,9 @@ const Login: React.FC = () => {
         required 
       />
       <button type="submit">Login</button>
-      <button type="button" onClick={handleGoogleLogin}>Login with Google</button>
+      <button type="button" onClick={handleGoogleLogin} className="google-login-button">
+        Login with Google
+      </button>
     </form>
   );
 };

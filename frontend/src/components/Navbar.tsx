@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     setToken(null);
-    localStorage.removeItem('token');
+    localStorage.removeItem('authToken'); // Ensure the token is removed with the correct key
     toast.success('Logged out successfully.');
     navigate('/');
   };
