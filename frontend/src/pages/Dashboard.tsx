@@ -59,7 +59,7 @@ const Dashboard: React.FC = () => {
   };
 
   const checkDropboxToken = async () => {
-    if (token) {
+    if (token && dropboxToken) {
       setIsLoading(true);
       try {
         console.log('Checking Dropbox token status...');
@@ -73,13 +73,6 @@ const Dashboard: React.FC = () => {
         if (response.data.dropboxToken) {
           console.log('Setting Dropbox token in context');
           setDropboxToken(response.data.dropboxToken);
-          if (!localStorage.getItem('dropboxConnected')) {
-            localStorage.setItem('dropboxConnected', 'true');
-            if (!hasShownConnectionToast.current) {
-              toast.success('Dropbox connection verified');
-              hasShownConnectionToast.current = true;
-            }
-          }
         }
       } catch (error) {
         console.error('Token check failed:', error);

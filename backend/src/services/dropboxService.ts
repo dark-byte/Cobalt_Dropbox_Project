@@ -18,6 +18,7 @@ export const getDropboxAuthUrl = (state: string) => {
     client_id: process.env.DROPBOX_CLIENT_ID || '',
     redirect_uri: process.env.DROPBOX_REDIRECT_URI || '',
     state,
+    token_access_type: 'offline',
   });
   return `${DROPBOX_OAUTH_URL}/authorize?${params}`;
 };
@@ -64,46 +65,6 @@ export const refreshDropboxToken = async (refreshToken: string): Promise<Dropbox
   } catch (error) {
     console.error('Error refreshing Dropbox token:', error);
     throw new Error('Failed to refresh token');
-  }
-};
-
-// Wrapper function to handle token refresh
-export const withTokenRefresh = async <T>(
-  user: IUser,
-  apiCall: (token: string) => Promise<T>
-): Promise<T> => {
-  if (!user.dropboxToken || !user.dropboxRefreshToken) {
-    throw new Error('Dropbox not connected');
-  }
-
-  try {
-    // Check if token is expired or will expire soon (5 minutes buffer)
-    const isExpired = user.dropboxTokenExpiry && 
-      new Date(user.dropboxTokenExpiry).getTime() - 5 * 60 * 1000 < Date.now();
-
-    if (isExpired) {
-      const tokens = await refreshDropboxToken(user.dropboxRefreshToken);
-      user.dropboxToken = tokens.access_token;
-      user.dropboxTokenExpiry = new Date(Date.now() + tokens.expires_in * 1000);
-      await user.save();
-    }
-
-    return await apiCall(user.dropboxToken);
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      // Token might be invalid, try refreshing
-      try {
-        const tokens = await refreshDropboxToken(user.dropboxRefreshToken);
-        user.dropboxToken = tokens.access_token;
-        user.dropboxTokenExpiry = new Date(Date.now() + tokens.expires_in * 1000);
-        await user.save();
-        
-        return await apiCall(user.dropboxToken);
-      } catch (refreshError) {
-        throw new Error('Failed to refresh token');
-      }
-    }
-    throw error;
   }
 };
 

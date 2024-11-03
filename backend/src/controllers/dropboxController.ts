@@ -55,6 +55,8 @@ export const handleDropboxAuthCallback = asyncHandler(async (req: Request, res: 
 
     const tokenData = await dropboxService.getDropboxAccessToken(code as string);
     user.dropboxToken = tokenData.access_token;
+    user.dropboxRefreshToken = tokenData.refresh_token;
+    user.dropboxTokenExpiry = new Date(Date.now() + tokenData.expires_in * 1000);
     await user.save();
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -86,7 +88,25 @@ export const checkDropboxToken = asyncHandler(async (req: Request, res: Response
     });
   } catch (error) {
     console.error('Error verifying Dropbox token:', error);
-    return res.status(401).json({ error: 'Invalid Dropbox token' });
+
+    // Attempt to refresh the token if invalid
+    if (user.dropboxRefreshToken) {
+      try {
+        const tokens = await dropboxService.refreshDropboxToken(user.dropboxRefreshToken);
+        user.dropboxToken = tokens.access_token;
+        user.dropboxTokenExpiry = new Date(Date.now() + tokens.expires_in * 1000);
+        await user.save();
+
+        return res.json({
+          dropboxToken: user.dropboxToken
+        });
+      } catch (refreshError) {
+        console.error('Error refreshing Dropbox token:', refreshError);
+        return res.status(401).json({ error: 'Invalid Dropbox token and failed to refresh' });
+      }
+    } else {
+      return res.status(401).json({ error: 'Invalid Dropbox token' });
+    }
   }
 });
 
@@ -107,8 +127,23 @@ export const listFolders = asyncHandler(async (req: Request, res: Response) => {
   }
 
   try {
+    // Verify token before proceeding
+    const isValidToken = await dropboxService.verifyDropboxToken(dropboxToken);
+    if (!isValidToken) {
+      console.log('Invalid Dropbox token, attempting refresh...');
+      if (!user.dropboxRefreshToken) {
+        return res.status(403).json({ error: 'Dropbox token expired and no refresh token available' });
+      }
+
+      const newTokens = await dropboxService.refreshDropboxToken(user.dropboxRefreshToken);
+      user.dropboxToken = newTokens.access_token;
+      user.dropboxTokenExpiry = new Date(Date.now() + (newTokens.expires_in * 1000));
+      await user.save();
+      console.log('Token refreshed successfully');
+    }
+
     console.log('Fetching folders from Dropbox...');
-    const folders = await dropboxService.listDropboxFolders(dropboxToken);
+    const folders = await dropboxService.listDropboxFolders(user.dropboxToken as string);
     return res.json(folders);
   } catch (error) {
     console.error('Error listing folders:', error);

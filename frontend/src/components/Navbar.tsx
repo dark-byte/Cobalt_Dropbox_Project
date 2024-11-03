@@ -12,6 +12,8 @@ const Navbar: React.FC = () => {
   const handleLogout = () => {
     setToken(null);
     localStorage.removeItem('authToken');
+    localStorage.removeItem('dropboxAccessToken')
+    localStorage.removeItem('dropboxConnected');
     toast.success('Logged out successfully.');
     navigate('/');
   };
