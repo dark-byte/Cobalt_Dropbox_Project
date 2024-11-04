@@ -1,4 +1,4 @@
-<div align="left" style="position: relative;">style="margin: -20px 0 0 20px;">
+<div align="left" style="position: relative;" style="margin: -20px 0 0 20px;">
 <h1>COBALT DROPBOX PROJECT</h1>
 <p align="left">
 </p>
