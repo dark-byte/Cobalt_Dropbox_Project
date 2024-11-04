@@ -37,8 +37,10 @@ export const redirectToDropboxAuth = asyncHandler(async (req: Request, res: Resp
 export const handleDropboxAuthCallback = asyncHandler(async (req: Request, res: Response) => {
   const { code, state: returnedState } = req.query;
 
+
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   if (!code || !returnedState) {
-    return res.status(400).json({ error: 'Missing required parameters' });
+    return res.status(400).redirect(`${frontendUrl}/dashboard?error=Missing required parameters`);
   }
 
   try {
@@ -58,8 +60,6 @@ export const handleDropboxAuthCallback = asyncHandler(async (req: Request, res: 
     user.dropboxRefreshToken = tokenData.refresh_token;
     user.dropboxTokenExpiry = new Date(Date.now() + tokenData.expires_in * 1000);
     await user.save();
-
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     return res.redirect(`${frontendUrl}/dashboard?dropboxToken=${tokenData.access_token}`);
   } catch (error) {
     console.error('Dropbox callback error:', error);
@@ -129,6 +129,7 @@ export const listFolders = asyncHandler(async (req: Request, res: Response) => {
   try {
     // Verify token before proceeding
     const isValidToken = await dropboxService.verifyDropboxToken(dropboxToken);
+    console.log('Token verified:', isValidToken);
     if (!isValidToken) {
       console.log('Invalid Dropbox token, attempting refresh...');
       if (!user.dropboxRefreshToken) {
@@ -218,4 +219,18 @@ export const deleteFileOrFolder = asyncHandler(async (req: Request, res: Respons
     const typedError = error as Error;
     res.status(500).json({ error: typedError.message || 'Failed to delete Dropbox item' });
   }
+});
+
+// Get Dropbox token from the database
+export const getDropboxToken = asyncHandler(async (req: Request, res: Response) => {
+  const user = await User.findById((req.user as IUser)._id);
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  if (!user.dropboxToken) {
+    return res.status(404).json({ error: 'Dropbox token not found' });
+  }
+
+  return res.json({ dropboxToken: user.dropboxToken });
 });

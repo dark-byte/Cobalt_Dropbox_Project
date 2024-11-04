@@ -7,10 +7,11 @@ import axios from 'axios';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
-  const { token, dropboxToken, setToken, setDropboxToken } = useContext(AuthContext);
+  const { token, dropboxToken, setToken, setDropboxToken, user, setUser } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
-  const API_URL = process.env.REACT_APP_DROPBOX_API_URL;
+  const API_URL = process.env.REACT_APP_API_URL;
+  const API_DROPBOX_URL = process.env.REACT_APP_DROPBOX_API_URL;
   const [isLoading, setIsLoading] = useState(false);
   const hasShownConnectionToast = useRef(false);
   const isInitialMount = useRef(true);
@@ -40,7 +41,7 @@ const Dashboard: React.FC = () => {
     if (token) {
       setIsLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/auth`, {
+        const response = await axios.get(`${API_DROPBOX_URL}/auth`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -59,26 +60,33 @@ const Dashboard: React.FC = () => {
   };
 
   const checkDropboxToken = async () => {
-    if (token && dropboxToken) {
+    if (token) {
       setIsLoading(true);
       try {
         console.log('Checking Dropbox token status...');
-        const response = await axios.get(`${API_URL}/checkDropboxToken`, {
+        const response = await axios.get(`${API_DROPBOX_URL}/checkDropboxToken`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         console.log('Token check response:', response.data);
-        
+  
         if (response.data.dropboxToken) {
           console.log('Setting Dropbox token in context');
           setDropboxToken(response.data.dropboxToken);
+          localStorage.setItem('dropboxAccessToken', response.data.dropboxToken);
+          localStorage.setItem('dropboxConnected', 'true');
+        } else {
+          console.log('Dropbox token not found in response');
         }
       } catch (error) {
-        console.error('Token check failed:', error);
         if (axios.isAxiosError(error)) {
           if (error.response?.status === 404) {
-            console.log('Dropbox token not found');
+            console.log('Dropbox not connected by the user.');
+            setDropboxToken(null);
+            localStorage.removeItem('dropboxAccessToken');
+            localStorage.setItem('dropboxConnected', 'false');
+            toast.info('Dropbox not connected. Please connect to Dropbox.');
           } else if (error.response?.status === 401) {
             console.error('Dropbox token expired');
             setDropboxToken(null);
@@ -101,6 +109,25 @@ const Dashboard: React.FC = () => {
     }
   }, [token]);
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (token) {
+        try {
+          const response = await axios.get(`${API_URL}/user`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          setUser(response.data);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [token, setUser]);
+
   if (isLoading) {
     return (
       <div className="dashboard-container">
@@ -109,8 +136,15 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  const defaultProfilePicture = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'Default User')}&background=ccc&color=fff&size=200`;
+
   return (
     <div className="dashboard-container">
+      <div className="user-info">
+        <img src={user?.profilePicture || defaultProfilePicture} alt="Profile" className="profile-picture" />
+        <h2>{user?.name}</h2>
+        <p>{user?.email}</p>
+      </div>
       {!dropboxToken ? (
         <div className="dropbox-login-container">
           <button 

@@ -1,5 +1,6 @@
 import React, { createContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface AuthContextType {
   token: string | null;
@@ -7,10 +8,18 @@ interface AuthContextType {
   setToken: (token: string | null) => void;
   setDropboxToken: (token: string | null) => void;
   isAuthenticated: boolean;
+  user: User | null;
+  setUser: (user: User | null) => void;
 }
 
 interface AuthProviderProps {
   children: React.ReactNode;
+}
+
+interface User {
+  name: string;
+  email: string;
+  profilePicture: string;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -19,11 +28,14 @@ export const AuthContext = createContext<AuthContextType>({
   setToken: () => {},
   setDropboxToken: () => {},
   isAuthenticated: false,
+  user: null,
+  setUser: () => {},
 });
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));  
   const [dropboxToken, setDropboxToken] = useState<string | null>(localStorage.getItem('dropboxAccessToken'));
+  const [user, setUser] = useState<User | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -56,10 +68,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [token]);
 
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('authToken', token);
+    } else {
+      localStorage.removeItem('authToken');
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (dropboxToken) {
+      localStorage.setItem('dropboxAccessToken', dropboxToken);
+    } else {
+      localStorage.removeItem('dropboxAccessToken');
+    }
+  }, [dropboxToken]);
+
   const isAuthenticated = !!token;
 
   return (
-    <AuthContext.Provider value={{ token, dropboxToken, setToken, setDropboxToken, isAuthenticated }}>
+    <AuthContext.Provider value={{ token, dropboxToken, setToken, setDropboxToken, isAuthenticated, user, setUser }}>
       {children}
     </AuthContext.Provider>
   );
