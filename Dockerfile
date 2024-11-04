@@ -41,7 +41,6 @@ COPY --from=frontend-build /app/frontend/build ./frontend/build
 # Copy backend build to the production image
 COPY --from=backend-build /app/backend/dist ./backend/dist
 COPY --from=backend-build /app/backend/node_modules ./backend/node_modules
-COPY --from=backend-build /app/backend/.env ./backend/.env
 
 # Install serve globally
 RUN npm install -g serve
