@@ -2,23 +2,18 @@ FROM node:18 AS builder
 
 WORKDIR /app
 
-# Copy package.json and install dependencies
 COPY package.json tsconfig.json ./
 RUN npm install
 
-# Copy source code and build
 COPY src ./src
 RUN npm run build
 
 FROM node:18-alpine
 WORKDIR /app
 
-# Copy only necessary files from the build stage
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
-# Expose the backend port (e.g., 5000)
-EXPOSE 5000
+EXPOSE 8000
 
-# Command to run the backend server
-CMD ["npm", "start"]
+CMD ["node", "dist/server.js"]
