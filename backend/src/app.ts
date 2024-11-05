@@ -11,7 +11,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: 'https://cobalt-dropbox-project.vercel.app',
   credentials: true,
 }));
 app.use(express.json());
