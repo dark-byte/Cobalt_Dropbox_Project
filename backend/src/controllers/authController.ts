@@ -89,7 +89,7 @@ export const googleAuthCallback = async (req: Request, res: Response): Promise<v
     const token = generateJWT(user); // Generate JWT
 
     // Redirect to frontend home page with token as query parameter
-    res.redirect(`http://localhost:3000/dashboard?token=${token}`);
+    res.redirect(`https://cobalt-dropbox-project.vercel.app/dashboard?token=${token}`);
   } catch (error: any) {
     console.error('Google OAuth callback error:', error);
     res.status(500).json({ error: 'Authentication failed' });
